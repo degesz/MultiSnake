@@ -1,0 +1,439 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>Page Title</title>
+</head>
+<body>
+
+<div id="selectName">
+		<label for="name">Nastavit jméno</label>
+		<input type="text" id="nameInput">
+		<button onclick="setName()">Odeslat</button>
+</div>
+
+<div id="selectGame">
+	<div id="newGame">
+		<button onclick="newGame()">Založit novou hru: </button>
+	</div>
+
+	<div id="games">
+		
+	</div>
+
+</div>
+
+<div id="gameDiv" style="display: none;">
+	<canvas id="ctx" width="500" height="500" style="border: 1px solid #000000 ;"></canvas>
+
+</div>
+
+	<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+	<script>
+
+ 		var areaSize = 20;
+		var joinedGameId;
+		var myTurn;
+		var mySign = "";
+		var setSquares = [	// array that stores if squares are already set
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+
+			];
+
+		var ctx = document.getElementById("ctx").getContext("2d");
+		ctx.font = '30px Arial';
+	 
+		var socket = io();
+
+		socket.on('gameList',function(data){
+
+
+			//	console.log(data)	;
+			var GAMES_LIST = data;
+			var gamesStr = "";
+
+			var i;
+			for(i = 0; i< GAMES_LIST.length; i++){
+				if(GAMES_LIST[i] == undefined){
+					continue;
+				}
+
+
+				gamesStr +='<div id=game';
+				gamesStr += GAMES_LIST[i].id; 
+				gamesStr += ' style="border:2px solid orange; width: 75%; height: 20px;">Založil: ';
+				gamesStr += GAMES_LIST[i].founder; 
+				gamesStr += '  Hráči: ';
+				gamesStr += GAMES_LIST[i].players;
+				gamesStr += '     <button onclick="join(this.id)" id="'
+				gamesStr += GAMES_LIST[i].id; 
+				gamesStr += '">Připojit se</button> </div>'
+			}
+
+			document.getElementById("games").innerHTML = gamesStr	;
+		});		
+
+		socket.on('startGame',function(data){
+			generateGameArea();
+			
+			if(data == 'x'){
+				myTurn = true;
+				mySign = "x";
+				
+			}
+			if(data == 'o'){
+				myTurn = false;
+				mySign = "o";
+			}
+
+		});	
+
+		socket.on('newCompetitorSquare',function(data){
+			setSquares[data.x][data.y] = true
+				document.getElementById("gridItem" + data.x + "x" + data.y).style.background = "#cccccc";
+				document.getElementById("gridItem" + data.x + "x" + data.y).src=("client/img/" + data.mySign + ".gif");
+				if(checkWin(data.x, data.y, data.mySign)){
+					win();
+					alert("Protihráč vyhrál")
+				}
+
+				myTurn = true;
+			
+		});	
+
+
+		function setName(){
+		 socket.emit("setName", {
+			name: document.getElementById("nameInput").value
+			});
+		 document.getElementById("nameInput").value = "";
+		}
+
+		function newGame(){
+			socket.emit("newGame");
+		}
+
+		function join(id){
+			socket.emit('join', id);
+			joinedGameId = id;
+		}
+		
+
+
+		//game
+		function generateGameArea(){
+			
+			document.getElementById("gameDiv").style = "position:relative"	; //make gameDiv visible
+
+			var gameAreaHTMLStr = "";
+			var row;
+			var col;
+			for(col = 0; col < areaSize; col++){
+
+				for(row = 0; row < areaSize; row++){
+					gameAreaHTMLStr += '<img id="gridItem';
+					gameAreaHTMLStr += (col + "x" + row);
+					gameAreaHTMLStr += '" src="client/img/empty.gif" style="position:absolute;			left:';
+					gameAreaHTMLStr += ((24*col) +  'px;top:' + (24*row));
+					gameAreaHTMLStr += 'px;			width:23px; height:23px;			background:#cccccc;cursor:hand" onmouseover="ActionOver(';
+					gameAreaHTMLStr += (col + ", " + row);
+					gameAreaHTMLStr += ')" onmouseout="ActionOut(';
+					gameAreaHTMLStr += (col + ", " + row);
+					gameAreaHTMLStr += ')" onclick="ActionClick(';
+					gameAreaHTMLStr += (col + ", " + row);
+					gameAreaHTMLStr += ')"> </img>     ';
+					//alert("generating");
+
+
+				}
+			}
+			document.getElementById("gameDiv").innerHTML = gameAreaHTMLStr;
+			//console.log(gameAreaHTMLStr);
+
+		}
+		
+
+
+		function checkWin(x, y, sign){
+			var streak = 0;
+			var i;
+			var j;
+
+			for(i = x; i < (x+5); i++){		//doprava
+				if(document.getElementById("gridItem" + i + "x" + y) == null){
+					break;
+				}
+
+				if(document.getElementById("gridItem" + i + "x" + y).src.includes("client/img/" + sign + ".gif")){
+					streak++;
+				}
+				else{
+					break;
+				}
+
+			}
+			console.log("streak doprava je " + streak);
+			streak--;
+
+			for(i = x; i > (x-5); i--){	//doleva
+				if(document.getElementById("gridItem" + i + "x" + y) == null){
+					break;
+				}
+
+				if(document.getElementById("gridItem" + i + "x" + y).src.includes("client/img/" + sign + ".gif")){
+					streak++;
+				}
+				else{
+					break;
+				}
+			}
+
+			console.log("streak doprava i doleva je " + streak);
+			if( streak >= 5){
+				console.log("win")
+				return true;
+			}
+			streak = 0;
+
+			for(i = y; i < (y+5); i++){		//dolu
+				if(document.getElementById("gridItem" + x + "x" + i) == null){
+					break;
+				}
+
+				if(document.getElementById("gridItem" + x + "x" + i).src.includes("client/img/" + sign + ".gif")){
+					streak++;
+				}
+				else{
+					break;
+				}
+
+			}
+			console.log("streak dolu je " + streak);
+			streak--;
+
+			for(i = y; i > (y-5); i--){	//nahoru
+				if(document.getElementById("gridItem" + x + "x" + i) == null){
+					break;
+				}
+
+				if(document.getElementById("gridItem" + x + "x" + i).src.includes("client/img/" + sign + ".gif")){
+					streak++;
+				}
+				else{
+					break;
+				}
+			}
+
+			console.log("streak dolu i nahoru je " + streak);
+			if( streak >= 5){
+				console.log("win")
+				return true;
+			}
+
+			streak = 0;
+
+			j = x;
+			for(i = y; i < (y+5); i++){		//dolu doprava
+				if(document.getElementById("gridItem" + j + "x" + i) == null){
+					break;
+				}
+
+				if(document.getElementById("gridItem" + j + "x" + i).src.includes("client/img/" + sign + ".gif")){
+					streak++;
+					j++
+				}
+				else{
+					break;
+				}
+
+			}
+			console.log("streak dolu doprava je " + streak);
+			streak--;
+
+			j = x;
+			for(i = y; i > (y-5); i--){	//nahoru doleva
+				if(document.getElementById("gridItem" + j + "x" + i) == null){
+					break;
+				}
+
+				if(document.getElementById("gridItem" + j + "x" + i).src.includes("client/img/" + sign + ".gif")){
+					streak++;
+					j--
+				}
+				else{
+					break;
+				}
+			}
+
+			console.log("streak dolu doprava i nahoru doleva je " + streak);
+			if( streak >= 5){
+				console.log("win")
+				return true;
+			}
+
+			streak = 0;
+
+			j = x;
+			for(i = y; i < (y+5); i++){		//dolu doprava
+				if(document.getElementById("gridItem" + j + "x" + i) == null){
+					break;
+				}
+
+				if(document.getElementById("gridItem" + j + "x" + i).src.includes("client/img/" + sign + ".gif")){
+					streak++;
+					j--
+				}
+				else{
+					break;
+				}
+
+			}
+			console.log("streak dolu doprava je " + streak);
+			streak--;
+
+			j = x;
+			for(i = y; i > (y-5); i--){	//nahoru doleva
+				if(document.getElementById("gridItem" + j + "x" + i) == null){
+					break;
+				}
+
+				if(document.getElementById("gridItem" + j + "x" + i).src.includes("client/img/" + sign + ".gif")){
+					streak++;
+					j++
+				}
+				else{
+					break;
+				}
+			}
+
+			console.log("streak dolu doprava i nahoru doleva je " + streak);
+			if( streak >= 5){
+				console.log("win")
+				return true;
+			}
+
+			streak = 0;
+
+			return false;
+
+
+			
+		}
+
+
+
+			function ActionOver(x,y){
+			//	alert("actionOver");
+				if(myTurn == false){	//check my turn
+					return;
+				}
+			//	alert("actionOver checked turn");
+				if(setSquares[x][y] == true){	//check if square is already set
+					return
+				}
+			//	alert("actionOver Checked if set");
+				document.getElementById("gridItem" + x + "x" + y).style.background = "rgb(255,190,0)";
+				document.getElementById("gridItem" + x + "x" + y).src=("client/img/" + mySign + ".gif");
+
+			}
+
+			function ActionOut(x,y){
+				if(myTurn == false){	//check my turn
+					return;
+				}
+				if(setSquares[x][y] == true){	//check if square is already set
+					return
+				}
+				
+				document.getElementById("gridItem" + x + "x" + y).style.background = "#cccccc";
+				document.getElementById("gridItem" + x + "x" + y).src=("client/img/empty.gif");
+			}
+
+			function ActionClick(x,y){
+				if(myTurn == false){	//check my turn
+					return;
+				}
+				if(setSquares[x][y] == true){	//check if square is already set
+					return
+				}
+
+				setSquares[x][y] = true
+				document.getElementById("gridItem" + x + "x" + y).style.background = "#cccccc";
+				document.getElementById("gridItem" + x + "x" + y).src=("client/img/" + mySign + ".gif");
+
+				myTurn = false;
+
+				socket.emit('myNewSquare', {
+					"gameId":joinedGameId,
+					"mySign": mySign,
+					"x": x,
+					"y": y
+				});
+
+				if(checkWin(x, y, mySign)){
+					socket.emit('win', joinedGameId);
+					win();
+					alert("Vyhrál jsi");
+				}
+
+			}
+
+
+			function win(){
+
+			 joinedGameId = null;
+			 myTurn = null;
+			 mySign = "";
+			 setSquares = [	// array that stores if squares are already set
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+				[false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, ],
+
+			];
+
+			document.getElementById("gameDiv").style = "display: none"	; //make gameDiv invisible
+
+
+			}
+
+
+	</script>
+</body>
+</html>
+
