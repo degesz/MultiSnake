@@ -1,11 +1,11 @@
 {
-  "name": "piskvorky_js",
+  "name": "snake_js",
   "version": "1.0.0",
-  "description": "",
   "main": "server.js",
   "dependencies": {
     "express": "^4.17.1",
-    "socket.io": "^2.3.0"
+    "socket.io": "^2.3.0",
+    "victor": "^1.1.0"
   },
   "devDependencies": {},
   "scripts": {
@@ -13,5 +13,14 @@
     "start": "node server.js"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/degesz/MultiSnake.git"
+  },
+  "bugs": {
+    "url": "https://github.com/degesz/MultiSnake/issues"
+  },
+  "homepage": "https://github.com/degesz/MultiSnake#readme",
+  "description": ""
 }

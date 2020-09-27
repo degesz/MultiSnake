@@ -1,4 +1,6 @@
+const { dir } = require('console');
 var express = require('express');
+const Victor = require('victor');
 var app = express();
 var serv = require('http').Server(app);
  
@@ -16,10 +18,16 @@ var SOCKET_LIST = {};
 var GAME_LIST = [];
 var GAME_DATA = [];
 
+
+
+var framerate = 4; ///////////////	SET FRAMERATE	///////////////////
+
 function gameDataObject(){
 	this.id = GAME_DATA.length;
 	this.players = [];
 	this.sockets = [];
+	this.player0Dir = new Victor(1, 0);
+	this.player1Dir = new Victor(-1, 0);
 
 }
 
@@ -33,10 +41,6 @@ var io = require('socket.io')(serv,{});
 io.sockets.on('connection', function(socket){
 	socket.id = Math.random();
 	socket.joined = false;
-	//socket.name;
-	//socket.x = 0;
-	//socket.y = 0;
-	//socket.number = "" + Math.floor(10 * Math.random());
 	sendGameList();
 	SOCKET_LIST[socket.id] = socket;
 
@@ -98,19 +102,7 @@ io.sockets.on('connection', function(socket){
 		}
 	});
 
-	socket.on('myNewSquare',function(data){
-
-		
-
-		if (data.mySign == "x") {
-			GAME_DATA[data.gameId].sockets[1].emit('newCompetitorSquare', data);
-		}
-		if (data.mySign == "o") {
-			GAME_DATA[data.gameId].sockets[0].emit('newCompetitorSquare', data);
-		}
-		
-
-	});
+	
 
 	socket.on('win', function(data){
 		console.log("hra " + data + " je vyhraná")
@@ -131,6 +123,41 @@ io.sockets.on('connection', function(socket){
 
 
 	});
+
+
+
+	socket.on('changeDir',function(data){
+
+
+		if (data.playerNumber == 0) {	//check if player isn't turning 180 degrees
+			if(GAME_DATA[data.id].player0Dir.x == data.dir.x * -1 || GAME_DATA[data.id].player0Dir.y == data.dir.y * -1){
+				return;
+			}
+		}
+		else{
+			if(GAME_DATA[data.id].player1Dir.x == data.dir.x * -1 || GAME_DATA[data.id].player1Dir.y == data.dir.y * -1){
+				return;
+			}
+		}
+
+		if (data.playerNumber == 0) { //set the player direction
+			GAME_DATA[data.id].player0Dir = data.dir;
+		}
+		else{
+			GAME_DATA[data.id].player1Dir = data.dir;
+		}
+		console.log(data.dir);
+	});
+
+	socket.on("foodEat", function(data){
+		newFood(data.id);
+		if (data.playerNumber == 0) { //set the player direction
+			GAME_DATA[data.id].sockets[1].emit("opponentEat");
+		}
+		else{
+			GAME_DATA[data.id].sockets[0].emit("opponentEat");
+		}
+	})
 	
 	
 	socket.on('disconnect',function(){
@@ -147,19 +174,28 @@ function sendGameList(){
 }
 
 function startGame(id){
-
-	
-
-	GAME_DATA[id].sockets[0].emit('startGame', 'x');
-	GAME_DATA[id].sockets[1].emit('startGame', 'o');
+		var socket = GAME_DATA[id].sockets[0];	
+		socket.emit('startGame', 0); //assign player IDs
+		var socket = GAME_DATA[id].sockets[1];
+		socket.emit('startGame', 1);
+		newFood(id);	//generate first food
 }
 
+function newFood(gameId){
+	var foodLoc = new Victor(Math.floor(Math.random() * 40) * 20, Math.floor(Math.random() * 40) * 20) ; //generate random location
+	GAME_DATA[gameId].sockets[0].emit("newFood", foodLoc);	//send food location to players
+	GAME_DATA[gameId].sockets[1].emit("newFood", foodLoc);
+	
+}
 
- /*
 setInterval(function(){
 
+	for(var i in GAME_DATA){
+		if(GAME_DATA[i].sockets.length < 2){	//don't send to games without 2 players
+			continue;
+		}
+		GAME_DATA[i].sockets[0].emit("directions", {"myDir": GAME_DATA[i].player0Dir, "opponentDir": GAME_DATA[i].player1Dir});//send directions to players
+		GAME_DATA[i].sockets[1].emit("directions", {"myDir": GAME_DATA[i].player1Dir, "opponentDir": GAME_DATA[i].player0Dir});
+	}
  
- 
- 
-},1000/25);		
- */
+},1000/framerate);	
