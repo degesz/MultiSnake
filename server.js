@@ -172,10 +172,7 @@ io.sockets.on('connection', function(socket){
 		delete SOCKET_LIST[socket.id];
 	});
 
-	socket.on("ping", function(){
-		socket.emit("ping");
-	})
- 
+
 });
 
 function sendGameList(){
