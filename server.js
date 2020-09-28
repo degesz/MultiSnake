@@ -191,7 +191,7 @@ function startGame(id){
 }
 
 function newFood(gameId){
-	var foodLoc = new Victor(Math.floor(Math.random() * 15) * 20, Math.floor(Math.random() * 15) * 20) ; //generate random location
+	var foodLoc = new Victor(Math.floor(Math.random() * 24) * 20, Math.floor(Math.random() * 24) * 20) ; //generate random location
 	GAME_DATA[gameId].sockets[0].emit("newFood", foodLoc);	//send food location to players
 	GAME_DATA[gameId].sockets[1].emit("newFood", foodLoc);
 	

@@ -4,8 +4,8 @@
 	var myColor = "#FF9900"
 	var opponentColor = "#0066FF"
 	var foodColor = "#FF6666"
-	var width = 300;
-	var height = 300;
+	var width = 480;
+	var height = 480;
 	var scale = 20;
 	document.getElementById("ctx").width = width;
 	document.getElementById("ctx").height = height;
