@@ -20,7 +20,7 @@ var GAME_DATA = [];
 
 
 
-var framerate = 8; ///////////////	SET FRAMERATE	///////////////////
+var framerate = 4; ///////////////	SET FRAMERATE	///////////////////
 
 function gameDataObject(){
 	this.id = GAME_DATA.length;
