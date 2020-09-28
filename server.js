@@ -171,6 +171,10 @@ io.sockets.on('connection', function(socket){
 	socket.on('disconnect',function(){
 		delete SOCKET_LIST[socket.id];
 	});
+
+	socket.on("ping", function(){
+		socket.emit("ping");
+	})
  
 });
 
@@ -207,3 +211,4 @@ setInterval(function(){
 	}
  
 },1000/framerate);	
+

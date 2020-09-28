@@ -60,3 +60,17 @@ var myPlayerNumber;
 			socket.emit('join', id);
 			joinedGameId = id;
 		}
+
+		var latency = 0;
+setInterval(() => {
+	latency = 0;
+	socket.emit("ping");
+}, 5000);
+
+setInterval(() => {
+	latency++;
+}, 1);
+
+socket.on("ping", function(){
+	console.log("Ping: " + latency);
+})
