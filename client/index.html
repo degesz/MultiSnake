@@ -23,7 +23,7 @@
 
 </div>
 
-<div id="gameDiv" style="display: none;">
+<div id="gameDiv" >
 	<canvas id="ctx"  style="border: 1px solid #313131 ;"></canvas>
 	<div id="buttons" style="text-align: center;">
 		<button style="width: 15%; height: 30px;" onclick='socket.emit("changeDir", {"dir":new Victor(0, -1), "id":joinedGameId, "playerNumber": myPlayerNumber });'> &#9650; </button> <br>
