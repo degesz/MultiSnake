@@ -105,6 +105,9 @@ io.sockets.on('connection', function(socket){
 	
 
 	socket.on('crash', function(data){
+		if(GAME_DATA[data.id] == undefined){
+			return;
+		}
 		console.log("hra " + data + " je vyhraná")
 
 		socket.joined = false;
