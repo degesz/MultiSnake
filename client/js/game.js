@@ -97,10 +97,36 @@
 		var myPreviousBlock = mySnake[mySnake.length-1];
 		var myShift = new Victor(data.myDir.x * scale, data.myDir.y * scale) ;
 		var opponentShift = new Victor(data.opponentDir.x * scale, data.opponentDir.y * scale) ;
+
+		/////// Wrapping around walls
+		 if(mySnake[mySnake.length-1].x == 0 && data.myDir.x == -1){	
+			myShift.x = width - scale ;
+		}
+		if(mySnake[mySnake.length-1].x == width-scale && data.myDir.x == 1){	
+			myShift.x = (width - scale)*-1 ;
+		}
+		if(mySnake[mySnake.length-1].y == 0 && data.myDir.y == -1){	
+			myShift.y = height-scale ;
+		}
+		if(mySnake[mySnake.length-1].y == height-scale && data.myDir.y == 1){	
+			myShift.y = (height-scale)*-1 ;
+		}
+
+		if(opponentSnake[opponentSnake.length-1].x == 0 && data.opponentDir.x == -1){	
+			opponentShift.x = width - scale ;
+		}
+		if(opponentSnake[opponentSnake.length-1].x == width-scale && data.opponentDir.x == 1){	
+			opponentShift.x = (width - scale)*-1 ;
+		}
+		if(opponentSnake[opponentSnake.length-1].y == 0 && data.opponentDir.y == -1){	
+			opponentShift.y = height-scale ;
+		}
+		if(opponentSnake[opponentSnake.length-1].y == height-scale && data.opponentDir.y == 1){	
+			opponentShift.y = (height-scale)*-1 ;
+		}
 	
 		if(checkFood() == false){
 			mySnake.shift(); //remove first element from snake array only if food wasn't eaten
-			console.log("food not eaten");
 		}
 		mySnake.push(new Victor(myPreviousBlock.x + myShift.x, myPreviousBlock.y + myShift.y));
 
@@ -110,14 +136,12 @@
 		}
 		opponentEaten = false;
 		opponentSnake.push(new Victor( opponentPreviousBlock.x + opponentShift.x, opponentPreviousBlock.y + opponentShift.y));
-		
-
-		
-		checkCrash();
-		checkWall();
-
-		console.log(mySnake);
 		drawSnakes();
+		checkCrash();
+
+		
+		//console.log(mySnake);
+		
 	})
 
 	socket.on("newFood", function(data){
@@ -126,9 +150,59 @@
 
 	socket.on("opponentEat", function(){
 		opponentEaten = true;
-		console.log("opponent has eaten");
 	})
 
+
+	function checkFood(){
+		if(foodLocation.x == mySnake[mySnake.length - 1].x && foodLocation.y == mySnake[mySnake.length - 1].y){
+			socket.emit("foodEat", { "id":joinedGameId, "playerNumber": myPlayerNumber })	//send msg to server food eaten
+			return true;
+			
+		}
+		return false;
+	}
+
+
+	function checkCrash(){
+		var j;
+			for(j = 0; j < mySnake.length - 1; j++){	//check for crashes against my blocks
+				if(mySnake[mySnake.length-1].x == mySnake[j].x && mySnake[mySnake.length-1].y == mySnake[j].y){
+					crash();
+				}
+			}
+			for(j = 0; j < opponentSnake.length; j++){	//check for crashes against opponents blocks
+				if(mySnake[mySnake.length-1].x == opponentSnake[j].x && mySnake[mySnake.length-1].y == opponentSnake[j].y){	
+					crash();
+				}
+			}
+		}
+	
+	function crash(){
+		socket.emit("crash",  { "id":joinedGameId, "playerNumber": myPlayerNumber }); //notify server
+		document.getElementById("gameDiv").style = "display: none"	; //make gameDiv invisible
+		joinedGameId = null;
+		myPlayerNumber = null;
+		mySnake = [];
+		opponentSnake = [];
+		foodLocation = new Victor();
+		opponentEaten = false;
+		alert("crash!");
+	}
+
+	socket.on("win", function(){
+		document.getElementById("gameDiv").style = "display: none"	; //make gameDiv invisible
+		joinedGameId = null;
+		myPlayerNumber = null;
+		mySnake = [];
+		opponentSnake = [];
+		foodLocation = new Victor();
+		opponentEaten = false;
+		alert("Win!");
+	})
+
+
+
+	
 	function drawSnakes(){
 		ctx.fillStyle = "#262626";
 		ctx.fillRect(0, 0, width, height);
@@ -146,25 +220,4 @@
 		for(i = 0; i < opponentSnake.length; i++){
 			ctx.fillRect(opponentSnake[i].x, opponentSnake[i].y, scale, scale);
 		}
-	}
-
-
-	function checkFood(){
-		console.log("food check");
-		if(foodLocation.x == mySnake[mySnake.length - 1].x && foodLocation.y == mySnake[mySnake.length - 1].y){
-			socket.emit("foodEat", { "id":joinedGameId, "playerNumber": myPlayerNumber })	//send msg to server food eaten
-			return true;
-			
-		}
-		return false;
-	}
-
-
-	function checkCrash(){
-
-	}
-
-
-	function checkWall(){
-
 	}

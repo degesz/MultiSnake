@@ -20,7 +20,7 @@ var GAME_DATA = [];
 
 
 
-var framerate = 4; ///////////////	SET FRAMERATE	///////////////////
+var framerate = 8; ///////////////	SET FRAMERATE	///////////////////
 
 function gameDataObject(){
 	this.id = GAME_DATA.length;
@@ -104,15 +104,17 @@ io.sockets.on('connection', function(socket){
 
 	
 
-	socket.on('win', function(data){
+	socket.on('crash', function(data){
 		console.log("hra " + data + " je vyhraná")
 
 		socket.joined = false;
 		if(GAME_DATA[data].sockets[0] == socket){
 			GAME_DATA[data].sockets[1].joined = false;
+			GAME_DATA[data].sockets[1].emit("win");
 		}
 		else{
 			GAME_DATA[data].sockets[0].joined = false;
+			GAME_DATA[data].sockets[0].emit("win");
 		}
 
 		delete GAME_DATA[data];
