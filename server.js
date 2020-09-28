@@ -132,6 +132,9 @@ io.sockets.on('connection', function(socket){
 
 
 	socket.on('changeDir',function(data){
+		if(GAME_DATA[data.id] == undefined){
+			return;
+		}
 
 
 		if (data.playerNumber == 0) {	//check if player isn't turning 180 degrees
