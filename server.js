@@ -108,17 +108,17 @@ io.sockets.on('connection', function(socket){
 		console.log("hra " + data + " je vyhraná")
 
 		socket.joined = false;
-		if(GAME_DATA[data].sockets[0] == socket){
-			GAME_DATA[data].sockets[1].joined = false;
-			GAME_DATA[data].sockets[1].emit("win");
+		if(GAME_DATA[data.id].sockets[0] == socket){
+			GAME_DATA[data.id].sockets[1].joined = false;
+			GAME_DATA[data.id].sockets[1].emit("win");
 		}
 		else{
-			GAME_DATA[data].sockets[0].joined = false;
-			GAME_DATA[data].sockets[0].emit("win");
+			GAME_DATA[data.id].sockets[0].joined = false;
+			GAME_DATA[data.id].sockets[0].emit("win");
 		}
 
-		delete GAME_DATA[data];
-		delete GAME_LIST[data];
+		delete GAME_DATA[data.id];
+		delete GAME_LIST[data.id];
 
 		sendGameList();
 

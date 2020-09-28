@@ -189,7 +189,7 @@
 		alert("crash!");
 	}
 
-	socket.on("win", function(){
+	/*socket.on("win", function(){
 		document.getElementById("gameDiv").style = "display: none"	; //make gameDiv invisible
 		joinedGameId = null;
 		myPlayerNumber = null;
@@ -198,7 +198,7 @@
 		foodLocation = new Victor();
 		opponentEaten = false;
 		alert("Win!");
-	})
+	})*/
 
 
 
