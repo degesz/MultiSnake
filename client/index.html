@@ -23,9 +23,9 @@
 
 </div>
 
-<div id="gameDiv" >
+<div id="gameDiv" style="display: none;">
 	<canvas id="ctx"  style="border: 1px solid #313131 ;"></canvas>
-	<div id="buttons" style="text-align: center;">
+	<div id="buttons" >
 		<button style="width: 15%; height: 30px;" onclick='socket.emit("changeDir", {"dir":new Victor(0, -1), "id":joinedGameId, "playerNumber": myPlayerNumber });'> &#9650; </button> <br>
 		<button style="width: 15%; height: 30px;" onclick='socket.emit("changeDir", {"dir":new Victor(-1, 0), "id":joinedGameId, "playerNumber": myPlayerNumber });'> &#10094; </button><button style="width: 15%; height: 30px;" onclick='socket.emit("changeDir", {"dir":new Victor(1, 0), "id":joinedGameId, "playerNumber": myPlayerNumber });'> &#10095; </button> <br>
 		<button style="width: 15%; height: 30px;" onclick='socket.emit("changeDir", {"dir":new Victor(0, 1), "id":joinedGameId, "playerNumber": myPlayerNumber });'> &#9660; </button>
